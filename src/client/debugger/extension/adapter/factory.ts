@@ -94,9 +94,7 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
             const debuggerAdapterPathToUse = path.join(
                 EXTENSION_ROOT_DIR,
                 'pythonFiles',
-                'lib',
-                'python',
-                'debugpy',
+                'dispatch_debugpy',
                 'adapter',
             );
 
@@ -163,7 +161,7 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
         }
         const prompts = [Interpreters.changePythonInterpreter, Common.doNotShowAgain];
         const selection = await showErrorMessage(
-            l10n.t('The debugger in the python extension no longer supports python versions minor than 3.7.'),
+            l10n.t('The debugger in the python extension no longer supports python versions minor than 2.7.'),
             { modal: true },
             ...prompts,
         );
@@ -183,7 +181,7 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
 
     private async getExecutableCommand(interpreter: PythonEnvironment | undefined): Promise<string[]> {
         if (interpreter) {
-            if ((interpreter.version?.major ?? 0) < 3 || (interpreter.version?.minor ?? 0) <= 6) {
+            if ((interpreter.version?.major ?? 0) < 3) {
                 this.showDeprecatedPythonMessage();
             }
             return interpreter.path.length > 0 ? [interpreter.path] : [];

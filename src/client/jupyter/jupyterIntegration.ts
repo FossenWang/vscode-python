@@ -124,7 +124,7 @@ type PythonApiForJupyterExtension = {
         resource?: InterpreterUri,
     ): Promise<ProductInstallStatus>;
     /**
-     * Returns path to where `debugpy` is. In python extension this is `/pythonFiles/lib/python`.
+     * Returns path to where `debugpy` is. In python extension this is `/pythonFiles/dispatch_debugpy`.
      */
     getDebuggerPath(): Promise<string>;
     /**

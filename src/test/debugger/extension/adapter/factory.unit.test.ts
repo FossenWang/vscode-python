@@ -39,7 +39,7 @@ suite('Debugging - Adapter Factory', () => {
     let commandManager: ICommandManager;
 
     const nodeExecutable = undefined;
-    const debugAdapterPath = path.join(EXTENSION_ROOT_DIR, 'pythonFiles', 'lib', 'python', 'debugpy', 'adapter');
+    const debugAdapterPath = path.join(EXTENSION_ROOT_DIR, 'pythonFiles', 'dispatch_debugpy', 'adapter');
     const pythonPath = path.join('path', 'to', 'python', 'interpreter');
     const interpreter = {
         architecture: Architecture.Unknown,
@@ -157,7 +157,7 @@ suite('Debugging - Adapter Factory', () => {
         sinon.assert.calledOnce(showErrorMessageStub);
     });
 
-    test('Display a message if python version is less than 3.7', async () => {
+    test('Display a message if python version is less than 3', async () => {
         when(interpreterService.getInterpreters(anything())).thenReturn([]);
         const session = createSession({});
         const deprecatedInterpreter = {
@@ -166,7 +166,7 @@ suite('Debugging - Adapter Factory', () => {
             sysPrefix: '',
             sysVersion: '',
             envType: EnvironmentType.Unknown,
-            version: new SemVer('3.6.12-test'),
+            version: new SemVer('2.7.12-test'),
         };
         when(state.value).thenReturn(false);
         when(interpreterService.getActiveInterpreter(anything())).thenResolve(deprecatedInterpreter);

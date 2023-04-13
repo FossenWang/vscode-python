@@ -15,6 +15,10 @@ DEBUGGER_PACKAGE = "debugpy"
 DEBUGGER_PYTHON_ABI_VERSIONS = ("cp310",)
 DEBUGGER_VERSION = "1.6.7"  # can also be "latest"
 
+PY36_DEBUGGER_DEST = os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python36")
+PY36_DEBUGGER_PYTHON_ABI_VERSIONS = ("cp39",)
+PY36_DEBUGGER_VERSION = "1.5.1"  # the last version supporting Python 3.6 and below
+
 
 def _contains(s, parts=()):
     return any(p in s for p in parts)
@@ -28,11 +32,11 @@ def _get_package_data():
         return json.loads(response.read())
 
 
-def _get_debugger_wheel_urls(data, version):
+def _get_debugger_wheel_urls(data, version, python_abi_versions):
     return list(
         r["url"]
         for r in data["releases"][version]
-        if _contains(r["url"], DEBUGGER_PYTHON_ABI_VERSIONS)
+        if _contains(r["url"], python_abi_versions)
     )
 
 
@@ -58,8 +62,11 @@ def main(root):
     else:
         use_version = DEBUGGER_VERSION
 
-    for url in _get_debugger_wheel_urls(data, use_version):
+    for url in _get_debugger_wheel_urls(data, use_version, DEBUGGER_PYTHON_ABI_VERSIONS):
         _download_and_extract(root, url, use_version)
+
+    for url in _get_debugger_wheel_urls(data, use_version, PY36_DEBUGGER_PYTHON_ABI_VERSIONS):
+        _download_and_extract(PY36_DEBUGGER_DEST, url, PY36_DEBUGGER_VERSION)
 
 
 if __name__ == "__main__":
