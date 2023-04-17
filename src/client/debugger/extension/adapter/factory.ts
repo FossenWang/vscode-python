@@ -73,8 +73,9 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
             }
         }
 
-        const command = await this.getDebugAdapterPython(configuration, session.workspaceFolder);
-        if (command.length !== 0) {
+        const interpreter = await this.getDebugAdapterPython(configuration, session.workspaceFolder);
+        const command = await this.getExecutableCommand(interpreter)
+        if (interpreter && command.length !== 0) {
             if (configuration.request === 'attach' && configuration.processId !== undefined) {
                 sendTelemetryEvent(EventName.DEBUGGER_ATTACH_TO_LOCAL_PROCESS);
             }
@@ -91,11 +92,15 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
                 return new DebugAdapterExecutable(executable, args);
             }
 
+            const majorVersion = interpreter.version?.major ?? 0
+            const minorVersion = interpreter.version?.minor ?? 0
+            const isPython36AndBelow = majorVersion < 3 || (majorVersion == 3 && minorVersion <= 6)
+            const pythonDir = isPython36AndBelow ? 'python36' : 'python'
             const debuggerAdapterPathToUse = path.join(
                 EXTENSION_ROOT_DIR,
                 'pythonFiles',
                 'lib',
-                'python',
+                pythonDir,
                 'debugpy',
                 'adapter',
             );
@@ -118,39 +123,33 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
      * @private
      * @param {(LaunchRequestArguments | AttachRequestArguments)} configuration
      * @param {WorkspaceFolder} [workspaceFolder]
-     * @returns {Promise<string>} Path to the python interpreter for this workspace.
+     * @returns {PythonEnvironment | undefined} Python interpreter infomation.
      * @memberof DebugAdapterDescriptorFactory
      */
     private async getDebugAdapterPython(
         configuration: LaunchRequestArguments | AttachRequestArguments,
         workspaceFolder?: WorkspaceFolder,
-    ): Promise<string[]> {
+    ): Promise<PythonEnvironment | undefined> {
         if (configuration.debugAdapterPython !== undefined) {
-            return this.getExecutableCommand(
-                await this.interpreterService.getInterpreterDetails(configuration.debugAdapterPython),
-            );
-        } else if (configuration.pythonPath) {
-            return this.getExecutableCommand(
-                await this.interpreterService.getInterpreterDetails(configuration.pythonPath),
-            );
+            return this.interpreterService.getInterpreterDetails(configuration.debugAdapterPython);
         }
 
         const resourceUri = workspaceFolder ? workspaceFolder.uri : undefined;
         const interpreter = await this.interpreterService.getActiveInterpreter(resourceUri);
         if (interpreter) {
             traceVerbose(`Selecting active interpreter as Python Executable for DA '${interpreter.path}'`);
-            return this.getExecutableCommand(interpreter);
+            return interpreter;
         }
 
         await this.interpreterService.hasInterpreters(); // Wait until we know whether we have an interpreter
         const interpreters = this.interpreterService.getInterpreters(resourceUri);
         if (interpreters.length === 0) {
             this.notifySelectInterpreter().ignoreErrors();
-            return [];
+            return undefined;
         }
 
         traceVerbose(`Picking first available interpreter to launch the DA '${interpreters[0].path}'`);
-        return this.getExecutableCommand(interpreters[0]);
+        return interpreters[0];
     }
 
     private async showDeprecatedPythonMessage() {
@@ -163,7 +162,7 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
         }
         const prompts = [Interpreters.changePythonInterpreter, Common.doNotShowAgain];
         const selection = await showErrorMessage(
-            l10n.t('The debugger in the python extension no longer supports python versions minor than 3.7.'),
+            l10n.t('The debugger in the python extension no longer supports python versions minor than 2.7.'),
             { modal: true },
             ...prompts,
         );
@@ -183,7 +182,7 @@ export class DebugAdapterDescriptorFactory implements IDebugAdapterDescriptorFac
 
     private async getExecutableCommand(interpreter: PythonEnvironment | undefined): Promise<string[]> {
         if (interpreter) {
-            if ((interpreter.version?.major ?? 0) < 3 || (interpreter.version?.minor ?? 0) <= 6) {
+            if ((interpreter.version?.major ?? 0) < 3) {
                 this.showDeprecatedPythonMessage();
             }
             return interpreter.path.length > 0 ? [interpreter.path] : [];

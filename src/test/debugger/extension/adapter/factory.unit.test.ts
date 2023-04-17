@@ -157,7 +157,7 @@ suite('Debugging - Adapter Factory', () => {
         sinon.assert.calledOnce(showErrorMessageStub);
     });
 
-    test('Display a message if python version is less than 3.7', async () => {
+    test('Display a message if python version is less than 2.7', async () => {
         when(interpreterService.getInterpreters(anything())).thenReturn([]);
         const session = createSession({});
         const deprecatedInterpreter = {
@@ -166,7 +166,7 @@ suite('Debugging - Adapter Factory', () => {
             sysPrefix: '',
             sysVersion: '',
             envType: EnvironmentType.Unknown,
-            version: new SemVer('3.6.12-test'),
+            version: new SemVer('2.7.12-test'),
         };
         when(state.value).thenReturn(false);
         when(interpreterService.getActiveInterpreter(anything())).thenResolve(deprecatedInterpreter);
@@ -306,6 +306,28 @@ suite('Debugging - Adapter Factory', () => {
         const debugExecutable = new DebugAdapterExecutable(pythonPath, [debugAdapterPath]);
 
         const descriptor = await factory.createDebugAdapterDescriptor(session, nodeExecutable);
+
+        assert.deepStrictEqual(descriptor, debugExecutable);
+    });
+
+    test('Use "lib/python36" to find debugger adapter package if python version is less than 3.7', async () => {
+        when(interpreterService.getInterpreters(anything())).thenReturn([]);
+        const session = createSession({});
+        const py36Interpreter = {
+            architecture: Architecture.Unknown,
+            path: pythonPath,
+            sysPrefix: '',
+            sysVersion: '',
+            envType: EnvironmentType.Unknown,
+            version: new SemVer('3.6.12-test'),
+        };
+        when(state.value).thenReturn(false);
+        when(interpreterService.getActiveInterpreter(anything())).thenResolve(py36Interpreter);
+
+        const descriptor = await factory.createDebugAdapterDescriptor(session, nodeExecutable);
+
+        const py36DebugAdapterPath = path.join(EXTENSION_ROOT_DIR, 'pythonFiles', 'lib', 'python36', 'debugpy', 'adapter');
+        const debugExecutable = new DebugAdapterExecutable(pythonPath, [py36DebugAdapterPath]);
 
         assert.deepStrictEqual(descriptor, debugExecutable);
     });

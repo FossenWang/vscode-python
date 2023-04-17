@@ -651,8 +651,8 @@ getInfoPerOS().forEach(([osName, osType, path]) => {
 
             expect(debugConfig).to.not.have.property('pythonPath');
             expect(debugConfig).to.have.property('python', debugPythonPath);
-            expect(debugConfig).to.have.property('debugAdapterPython', pythonPath);
-            expect(debugConfig).to.have.property('debugLauncherPython', pythonPath);
+            expect(debugConfig).to.have.property('debugAdapterPython', debugPythonPath);
+            expect(debugConfig).to.have.property('debugLauncherPython', debugPythonPath);
         });
 
         test('Ensure hardcoded "debugAdapterPython" is left unaltered', async () => {
