@@ -146,13 +146,13 @@ export abstract class BaseConfigurationResolver<T extends DebugConfiguration>
             debugConfiguration.debugAdapterPython === '${command:python.interpreterPath}' ||
             debugConfiguration.debugAdapterPython === undefined
         ) {
-            debugConfiguration.debugAdapterPython = debugConfiguration.pythonPath ?? debugConfiguration.python;
+            debugConfiguration.debugAdapterPython = debugConfiguration.python ?? debugConfiguration.pythonPath;
         }
         if (
             debugConfiguration.debugLauncherPython === '${command:python.interpreterPath}' ||
             debugConfiguration.debugLauncherPython === undefined
         ) {
-            debugConfiguration.debugLauncherPython = debugConfiguration.pythonPath ?? debugConfiguration.python;
+            debugConfiguration.debugLauncherPython = debugConfiguration.python ?? debugConfiguration.pythonPath;
         }
 
         delete debugConfiguration.pythonPath;
